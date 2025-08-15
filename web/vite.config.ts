@@ -12,7 +12,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://10.126.126.2:8080',
+        target: 'http://10.126.126.2:8081',
         changeOrigin: true,
         secure: false,
         configure: (proxy) => {
@@ -41,17 +41,17 @@ export default defineConfig({
         },
       },
       '/login': {
-        target: 'http://10.126.126.2:8080',
+        target: 'http://10.126.126.2:8081',
         changeOrigin: true,
         secure: false,
       },
       '/logout': {
-        target: 'http://10.126.126.2:8080',
+        target: 'http://10.126.126.2:8081',
         changeOrigin: true,
         secure: false,
       },
       '/register': {
-        target: 'http://10.126.126.2:8080',
+        target: 'http://10.126.126.2:8081',
         changeOrigin: true,
         secure: false,
       },

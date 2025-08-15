@@ -20,6 +20,8 @@ export const useChat = () => {
   // 删除 pendingChat 相关内容，彻底还原为原始 useChat 逻辑
   const [error, setError] = useState<string | null>(null);
   const currentChat = useAppSelector((state) => state.chat.currentChat);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   const _sendMessage = async (content: string, useTools: string[] = []) => {
     console.log(
@@ -74,8 +76,14 @@ export const useChat = () => {
     // Start streaming
     console.log('Calling streamChat function');
     let assistantResponse = '';
+
+    // 创建新的 AbortController
+    const controller = new AbortController();
+    setAbortController(controller);
+
     const cleanup = streamChat(
       chatRequest,
+      controller.signal, // 传递 signal 用于停止
       (content) => {
         // 确保内容保持换行符
         console.log('Received streaming content:', content);
@@ -88,16 +96,18 @@ export const useChat = () => {
         console.error('Stream error received:', error);
         setError(error);
         dispatch(setStreaming(false));
+        setAbortController(null);
       },
       // complete
       () => {
         console.log('Stream completed');
         dispatch(setStreaming(false));
+        setAbortController(null);
 
         console.log('Final assistant response:', assistantResponse);
         messageList.push(assistantMessage);
 
-        // Save the updated messages to the backend
+        // Save the updated messages to backend
         const messagesToSave: Message[] = [];
 
         // 获取最新的用户消息（倒数第二条）
@@ -156,12 +166,22 @@ export const useChat = () => {
     [modelConfig, dispatch, currentChat]
   );
 
+  const stopGeneration = useCallback(() => {
+    if (abortController) {
+      console.log('Stopping generation...');
+      abortController.abort();
+      dispatch(setStreaming(false));
+      setAbortController(null);
+    }
+  }, [abortController, dispatch]);
+
   const clearError = useCallback(() => {
     setError(null);
   }, []);
 
   return {
     sendMessage,
+    stopGeneration,
     error,
     clearError,
   };

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, X, Plus, File, Globe } from 'lucide-react';
+import { Send, X, Plus, File, Globe, Square } from 'lucide-react';
 import { useChat, useAppSelector } from '../../hooks';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,8 +20,11 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
   const [fileList, setFileList] = useState<FileItem[]>([]);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const { sendMessage } = useChat();
+  const { sendMessage, stopGeneration } = useChat();
   const { streaming } = useAppSelector((state) => state.chat);
+  const currentModel = useAppSelector(
+    (state) => state.chat.currentChat?.currentModel
+  );
 
   // Auto focus the textarea when component mounts
   useEffect(() => {
@@ -35,6 +38,12 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
     console.log('handleSend called, streaming state:', streaming);
     console.log('Message text:', messageText);
     console.log('File list:', fileList);
+
+    // 检查是否已选择模型
+    if (!currentModel) {
+      alert('请先选择模型！');
+      return;
+    }
 
     if ((messageText.trim() || fileList.length > 0) && !streaming) {
       console.log('Conditions met for sending message');
@@ -231,18 +240,23 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
             </Button>
           )}
 
-          {/* Send button */}
+          {/* Send/Stop button */}
           <Button
-            onClick={handleSend}
+            onClick={streaming ? stopGeneration : handleSend}
             disabled={
-              (!messageText.trim() && fileList.length === 0) || streaming
+              !streaming && !messageText.trim() && fileList.length === 0
             }
-            className="h-10 w-10 rounded-xl transition-all duration-200 hover:scale-105"
+            className={`h-10 w-10 rounded-xl transition-all duration-200 hover:scale-105 ${
+              streaming
+                ? 'text-white'
+                : 'bg-primary hover:bg-primary/90 text-white'
+            }`}
+            style={streaming ? { backgroundColor: 'rgb(124, 59, 237)' } : {}}
             size="icon"
-            title={streaming ? '正在生成回复...' : '发送消息'}
+            title={streaming ? '停止生成' : '发送消息'}
           >
             {streaming ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Square className="w-4 h-4" />
             ) : (
               <Send className="w-4 h-4" />
             )}
@@ -251,7 +265,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend }) => {
       </div>
 
       {/* 提示文本 */}
-      <div className="mt-3 text-center">
+      <div className="mt-2 text-center">
         <span className="text-xs text-muted-foreground">
           按 Enter 发送，Shift+Enter 换行
         </span>

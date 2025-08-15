@@ -14,9 +14,13 @@ export const getCookie = (name: string): string | null => {
   return null;
 };
 
-export const setCookie = (name: string, value: string, days: number = 30): void => {
+export const setCookie = (
+  name: string,
+  value: string,
+  days: number = 30
+): void => {
   const expires = new Date();
-  expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
   document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
 };
 
@@ -73,6 +77,7 @@ axios.interceptors.response.use(
 // Function to handle chat with SSE (Server-Sent Events)
 export const streamChat = async (
   request: ChatRequest,
+  signal: AbortSignal,
   onMessage: (content: string) => void,
   onError: (error: string) => void,
   onComplete: () => void
@@ -80,9 +85,12 @@ export const streamChat = async (
   let fullContent = '';
   let buffer = ''; // 用于处理跨块的不完整数据
 
-  // 创建AbortController用于取消请求
+  // 使用传入的 signal 进行请求控制
   const controller = new AbortController();
-  const signal = controller.signal;
+  // 监听传入的 signal，如果被中止则中止 controller
+  signal.addEventListener('abort', () => {
+    controller.abort();
+  });
 
   try {
     // 发送POST请求并处理响应
@@ -291,7 +299,9 @@ export const streamChat = async (
     const err = error as Error;
     console.error('Fetch error:', err);
     if (err.name === 'AbortError') {
-      console.log('Fetch aborted');
+      console.log('Fetch aborted by user');
+      // 用户主动停止，不显示错误
+      return;
     } else {
       onError(`请求错误: ${err.message}`);
     }
