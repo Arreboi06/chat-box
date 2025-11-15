@@ -3,8 +3,7 @@ package ink.whi.backend.dao.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.FastjsonTypeHandler;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import ink.whi.backend.common.dto.agent.ModelParams;
+import ink.whi.backend.common.dto.chat.ModelParams;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
